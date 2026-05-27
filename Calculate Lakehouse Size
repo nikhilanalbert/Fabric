@@ -1,0 +1,28 @@
+# Cell 1: Setup and Initialization
+from pyspark.sql.functions import col, round, sum as spark_sum
+import pandas as pd
+ 
+# Setup lakehouse/workspace context if necessary
+# %run ./SetupNotebook
+ 
+# Cell 2: List Tables and Calculate Size (PySpark)
+def get_lakehouse_table_sizes():
+    """
+    Lists all tables in the current lakehouse, calculates their size,
+    and returns a Spark DataFrame with sizes in MB.
+    """
+    tables = spark.catalog.listTables()
+    table_data = []
+ 
+    for table in tables:
+        if table.isTemporary:
+            continue
+        # Describe detail provides sizeInBytes
+        detail = spark.sql(f"DESCRIBE DETAIL {table.name}").select("sizeInBytes", "location", "name").collect()[0]
+        size_mb = detail['sizeInBytes'] / (1024 * 1024)
+        table_data.append((detail['name'], size_mb, detail['location']))
+ 
+    # Create DataFrame
+    df = spark.createDataFrame(table_data, ["TableName", "SizeMB", "Location"])
+    return df.orderBy(col("SizeMB").desc())
+ 
