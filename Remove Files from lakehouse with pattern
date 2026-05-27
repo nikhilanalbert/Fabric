@@ -1,0 +1,24 @@
+from notebookutils.fs import ls, rm
+import re
+
+# Define the path to your lakehouse folder within "Files" section (e.g., "Files/myfolder")
+# Use the abfss path format for OneLake access
+base_path = "abfss://deafe744-e5b1-4924-8d7b-19916a87a7d2@onelake.dfs.fabric.microsoft.com/47b39690-5527-473c-91a1-200417b1d609/Files/Extracts/Apr_2026/"
+
+# Alternative: If your lakehouse is attached as the default, you can use a relative path
+# base_path = "Files/myfolder" 
+
+# Define your pattern (e.g., delete all files starting with "temp_")
+file_pattern = "20260407*"
+
+# List all files in the directory
+files_to_delete = ls(base_path)
+
+# Iterate through the files and delete those matching the pattern
+for file_info in files_to_delete:
+    if re.match(file_pattern, file_info.name):
+        file_path = file_info.path
+        rm(file_path, True) # 'True' for recursive delete (works for files/folders)
+        print(f"Deleted: {file_path}")
+
+print("Deletion complete.")
