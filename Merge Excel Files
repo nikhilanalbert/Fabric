@@ -1,0 +1,44 @@
+import openpyxl
+from openpyxl import load_workbook
+
+# 1. Define paths to files in Lakehouse
+# Use the Lakehouse file path format: /lakehouse/default/Files/...
+wb1_path = "/lakehouse/default/Files/Extracts/Apr_2026/Home_CUF_EXTRACTS_DC080_212183_213336_20260331_20260430.xlsx"
+wb2_path = "/lakehouse/default/Files/Extracts/Apr_2026/Home_CUF_SUMMARY_EXTRACTS_DC080_212183_213336_20260331_20260430.xlsx"
+
+# 2. Load the workbooks
+# 'data_only=False' (default) preserves formulas, but 'keep_vba=True' 
+# can be used for macros.
+workbook1 = load_workbook(wb1_path)
+workbook2 = load_workbook(wb2_path)
+
+# 3. Get the sheet to copy from workbook2
+# You can select by index or name
+source_sheet = workbook2.worksheets[0] 
+
+# 4. Copy the worksheet to workbook1
+# Note: This method retains styles, formatting, and cell widths
+workbook1.create_sheet(title="Summary")
+target_sheet = workbook1["Summary"]
+
+# 5. Iteratively copy cells, styles, and formatting
+for row in source_sheet.iter_rows():
+    for cell in row:
+        new_cell = target_sheet.cell(row=cell.row, column=cell.column, value=cell.value)
+        if cell.has_style:
+            new_cell.font = cell.font.copy()
+            new_cell.border = cell.border.copy()
+            new_cell.fill = cell.fill.copy()
+            new_cell.number_format = cell.number_format
+            new_cell.alignment = cell.alignment.copy()
+
+for col_letter, col_dimension in source_sheet.column_dimensions.items():
+    target_sheet.column_dimensions[col_letter].width = col_dimension.width
+
+# 3. Maintain Row Heights
+for row_index, row_dimension in source_sheet.row_dimensions.items():
+    target_sheet.row_dimensions[row_index].height = row_dimension.height
+
+# 6. Save the updated workbook1
+workbook1.save(wb1_path)
+print("Sheet added successfully with formatting.")
